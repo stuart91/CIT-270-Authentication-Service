@@ -15,7 +15,8 @@ const redisClient = createClient(
 
 app.listen(port, async ()=>{
     await redisClient.connect();
-    console.log('listening on port:' ,+port);
+    console.log('listening on port: '+port);
+    
 });
 
 const validatePassword = async (request, response)=>{
@@ -28,13 +29,21 @@ app.get('/', (req,res)=>{
 app.use(bodyParser.json());
 
 
-app.post ('/user', (req,res)=>{
+app.post ('/user', async (req,res)=>{
+
     const newUserRequestObject = req.body;
+    const loginPassword = req.body.password;
+    const hash = md5(loginPassword);
+    console.log(hash);
+    newUserRequestObject.password = hash;
+    newUserRequestObject.verifyPassword = hash;
     console.log('New User:',JSON.stringify(newUserRequestObject));
-    redisClient.hSet('users',rew.body.email,JSON.stringify(newUserRequestObject));
+    redisClient.hSet('users',req.body.email,JSON.stringify(newUserRequestObject));
     res.send('New user'+newUserRequestObject.email+' added');
 })
-app.post("/login", (req,res)=>{
+
+app.post("/login", async (req,res)=>{
+
     const loginEmail = req.body.userName;
     console.log(JSON.stringify(req.body));
     console.log("loginEmail", loginEmail);
@@ -42,12 +51,21 @@ app.post("/login", (req,res)=>{
     console.log("loginPassword", loginPassword);
     // res.send("Who are you?");
 
-    if (loginEmail == "fakeacccount@fake.com" && loginPassword == "byu1stuDent!"){
-        const token = uuidv4();
+    const userString=await redisClient.hGet('users',loginEmail);
+    const userObject=JSON.parse(userString)
+    if(userObject=='' || userObject==null){
+        res.status(404);
+        res.send('User not found');
+    }
+    else if (loginEmail == userObject.userName && md5(loginPassword) == userObject.password){
+        const token = uuid4();
         res.send(token);
-    } else{
-        res.status(401);//unauthorized
+
+    } 
+    else{
+        res.status(401); //unauthorized error
         res.send("Invalid user or password");
     }
+
 
 })

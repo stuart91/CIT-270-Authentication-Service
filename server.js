@@ -1,5 +1,7 @@
 const express = require("express");
 const bodyParser = require('body-parser');
+const https = require('https');
+const fs = require('fs')
 const { v4: uuidv4 } = require('uuid');
 const port = 3000;
 const app = express();
@@ -9,15 +11,15 @@ const {createClient} = require('redis');
 
 const redisClient = createClient(
 {
-    Url:'redis://default@localhost6379'
+    Url:'redis://default@localhost:6379'
 }
 );
 
-app.listen(port, async ()=>{
-    await redisClient.connect();
-    console.log('listening on port: '+port);
+// app.listen(port, async ()=>{
+//     await redisClient.connect();
+//     console.log('listening on port: '+port);
     
-});
+// });
 
 const validatePassword = async (request, response)=>{
     //await redisClient.connect()://creating a TCP socket
@@ -27,6 +29,15 @@ app.get('/', (req,res)=>{
     res.send('Hello World!')
 });
 app.use(bodyParser.json());
+
+https.createServer({
+    key: fs.readFileSync('server.key'),
+    cert: fs.readFileSync('server.cert'),
+    
+}, app).listen(port, async () => {
+    await redisClient.connect();
+    console.log('Listening...')
+});  
 
 
 app.post ('/user', async (req,res)=>{
@@ -58,7 +69,7 @@ app.post("/login", async (req,res)=>{
         res.send('User not found');
     }
     else if (loginEmail == userObject.userName && md5(loginPassword) == userObject.password){
-        const token = uuid4();
+        const token = uuidv4();
         res.send(token);
 
     } 

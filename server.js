@@ -3,16 +3,16 @@ const bodyParser = require('body-parser');
 const https = require('https');
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid');
-const port = 3000;
+const port = 4043;
 const app = express();
 const redis = require('redis');
 const md5 = require('md5');
 const {createClient} = require('redis');
 
 const redisClient = createClient(
-{
-    Url:'redis://default@localhost:6379'
-}
+    {
+        url:'redis://default@34.68.13.208:6379',
+    }
 );
 
 // app.listen(port, async ()=>{
@@ -37,18 +37,14 @@ https.createServer({
     // passphrase: 'P@ssw0rd'
 
 }, app).listen(port, async () => {
-    await redisClient.connect();
     console.log('Listening...')
+    try{
+    await redisClient.connect();
+    console.log('Listening...')}
+    catch(error){
+        console.log(error)
+    }
 });
-
-https.createServer({
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.cert'),
-    
-}, app).listen(port, async () => {
-    await redisClient.connect();
-    console.log('Listening...')
-});  
 
 
 app.post ('/user', async (req,res)=>{

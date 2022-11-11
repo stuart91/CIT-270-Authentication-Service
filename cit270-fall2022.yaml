@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cit270-fall2022-danielstuart
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: cit270-fall2022-danielstuart
+  template:
+    metadata:
+      name: cit270-fall2022-danielstuart
+      labels:
+        app: cit270-fall2022-danielstuart
+    spec:
+      containers:
+      - name: cit270-fall2022-danielstuart
+        image: stuart91/cit270-fall2022
+        volumeMounts:
+        - name: ssl
+          mountPath: "/usr/src/app/SSL"
+        command: ["npm"]
+        args: ["run", "start"]
+        resources:
+          requests:
+            cpu: 0.125
+            memory: 500Mi
+          limits:
+            cpu: .125
+            memory: 600Mi
+        imagePullPolicy: IfNotPresent
+      volumes:
+      - name: ssl
+        secret:
+          secretName: ssl.secret.danielstuart
